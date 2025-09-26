@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Safe Drug Distribution</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6f8; }
+    h1 { color: #2c3e50; }
+    section { margin-bottom: 30px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input, select, button { padding: 10px; margin: 5px; font-size: 14px; }
+    button { background: #2ecc71; border: none; color: white; cursor: pointer; border-radius: 5px; }
+    button:hover { background: #27ae60; }
+    .expired { color: red; font-weight: bold; }
+    .valid { color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>💊 Safe Drug Distribution</h1>
+
+  <!-- Manufacturer: Register Drug -->
+  <section>
+    <h2>Register Drug (Manufacturer)</h2>
+    <input type="text" id="regDrugId" placeholder="Drug ID" />
+    <input type="text" id="batchNo" placeholder="Batch No" />
+    <input type="date" id="expiryDate" />
+    <button onclick="registerDrug()">Register</button>
+    <p id="regResult"></p>
+  </section>
+
+  <!-- Distributor/Pharmacy: Update Location -->
+  <section>
+    <h2>Update Location</h2>
+    <input type="text" id="updDrugId" placeholder="Drug ID" />
+    <select id="location">
+      <option value="Distributor">Distributor</option>
+      <option value="Pharmacy">Pharmacy</option>
+      <option value="Hospital">Hospital</option>
+    </select>
+    <button onclick="updateLocation()">Update</button>
+    <p id="updResult"></p>
+  </section>
+
+  <!-- Consumer: Verify Drug -->
+  <section>
+    <h2>Verify Drug (Consumer)</h2>
+    <input type="text" id="verDrugId" placeholder="Enter Drug ID" />
+    <button onclick="verifyDrug()">Verify</button>
+    <div id="verResult"></div>
+  </section>
+
+  <script>
+    const API_BASE = "http://localhost:3000"; // change if backend runs elsewhere
+
+    async function registerDrug() {
+      const drugId = document.getElementById("regDrugId").value;
+      const batchNo = document.getElementById("batchNo").value;
+      const expiryDate = document.getElementById("expiryDate").value;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ drugId, batchNo, expiryDate })
+        });
+        const data = await res.json();
+        document.getElementById("regResult").innerText = data.msg || data.error;
+      } catch (err) {
+        document.getElementById("regResult").innerText = "❌ Error connecting to backend";
+      }
+    }
+
+    async function updateLocation() {
+      const drugId = document.getElementById("updDrugId").value;
+      const location = document.getElementById("location").value;
+      const timestamp = new Date().toISOString();
+
+      try {
+        const res = await fetch(`${API_BASE}/api/updateLocation`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ drugId, location, timestamp })
+        });
+        const data = await res.json();
+        document.getElementById("updResult").innerText = data.msg || data.error;
+      } catch (err) {
+        document.getElementById("updResult").innerText = "❌ Error connecting to backend";
+      }
+    }
+
+    async function verifyDrug() {
+      const drugId = document.getElementById("verDrugId").value;
+      try {
+        const res = await fetch(`${API_BASE}/api/verify/${drugId}`);
+        const data = await res.json();
+
+        if (!data.ok) {
+          document.getElementById("verResult").innerHTML = "<p style='color:red;'>Drug not found!</p>";
+          return;
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+        const expiryStatus = data.expiry < today ? 
+          `<span class="expired">❌ Expired</span>` : 
+          `<span class="valid">✅ Valid</span>`;
+
+        let html = `
+          <div class="card">
+            <h3>Drug ID: ${data.drugId}</h3>
+            <p><b>Expiry:</b> ${data.expiry} ${expiryStatus}</p>
+            <h4>History:</h4>
+            <ul>
+        `;
+
+        data.history.forEach(h => {
+          html += `
+            <li>
+              <b>Location:</b> ${h.location} <br/>
+              <b>Time:</b> ${h.timestamp} <br/>
+              <b>Actor:</b> ${h.actor}
+            </li>`;
+        });
+
+        html += "</ul></div>";
+        document.getElementById("verResult").innerHTML = html;
+      } catch (err) {
+        document.getElementById("verResult").innerText = "❌ Error connecting to backend";
+      }
+    }
+  </script>
+</body>
+</html>
