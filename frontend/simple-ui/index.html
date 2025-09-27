@@ -1,131 +1,334 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Safe Drug Distribution</title>
+  <meta charset="utf-8" />
+  <title>Safe Drug Distribution — UI</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6f8; }
-    h1 { color: #2c3e50; }
-    section { margin-bottom: 30px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    input, select, button { padding: 10px; margin: 5px; font-size: 14px; }
-    button { background: #2ecc71; border: none; color: white; cursor: pointer; border-radius: 5px; }
-    button:hover { background: #27ae60; }
-    .expired { color: red; font-weight: bold; }
-    .valid { color: green; font-weight: bold; }
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --accent: #2ecc71;
+      --accent-dark: #27ae60;
+      --muted: #7f8c8d;
+    }
+    body { font-family: Inter, Arial, sans-serif; margin: 0; background: var(--bg); padding: 24px; color: #222; }
+    .container { max-width: 980px; margin: 0 auto; }
+    header { display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+    header h1 { margin:0; font-size:22px; color:#2c3e50; }
+    header p { margin:0; color:var(--muted); font-size:13px; }
+
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+
+    section.card {
+      background: var(--card);
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(8,20,30,0.06);
+    }
+    section.card h2 { margin:0 0 10px 0; font-size:16px; color:#1f2d3d; }
+
+    .field { display:flex; gap:8px; margin:8px 0; }
+    .field input[type="text"], .field input[type="date"], .field select {
+      flex:1;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid #e2e8f0;
+      font-size:14px;
+    }
+    .field .small { width:140px; }
+
+    button {
+      padding:10px 14px;
+      border-radius:8px;
+      border: none;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-weight:600;
+    }
+    button.secondary { background:#3498db; }
+    button.ghost { background:transparent; color:var(--muted); border:1px solid #e6e6e6; }
+
+    .result { margin-top:10px; font-size:14px; color:#2c3e50; }
+
+    .muted { color:var(--muted); font-size:13px; }
+
+    /* Timeline */
+    .timeline { position: relative; margin-top:10px; padding-left:18px; border-left:3px solid var(--accent); }
+    .timeline-item { margin:16px 0; position:relative; padding-left:12px; }
+    .timeline-dot { width:12px; height:12px; background:var(--accent); border-radius:50%; position:absolute; left:-19px; top:6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .timeline-card { background:#f8fafb; padding:10px 12px; border-radius:8px; box-shadow: 0 2px 6px rgba(2,6,23,0.03); }
+
+    .badge-valid { color:var(--accent-dark); font-weight:700; }
+    .badge-expired { color:#e74c3c; font-weight:700; }
+
+    .full-width { grid-column: 1 / -1; }
+
+    @media (max-width:800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    /* small helper */
+    .mono { font-family: monospace; font-size:13px; color:#34495e; }
   </style>
 </head>
 <body>
-  <h1>💊 Safe Drug Distribution</h1>
+  <div class="container">
+    <header>
+      <div>
+        <h1>💊 Safe Drug Distribution — Demo UI</h1>
+        <p class="muted">Register → Update → Verify (blockchain-backed). Change API base below if needed.</p>
+      </div>
+    </header>
 
-  <!-- Manufacturer: Register Drug -->
-  <section>
-    <h2>Register Drug (Manufacturer)</h2>
-    <input type="text" id="regDrugId" placeholder="Drug ID" />
-    <input type="text" id="batchNo" placeholder="Batch No" />
-    <input type="date" id="expiryDate" />
-    <button onclick="registerDrug()">Register</button>
-    <p id="regResult"></p>
-  </section>
+    <!-- ********* CONFIG ********* -->
+    <!-- Edit this if backend runs on another machine or ngrok -->
+    <script>
+      // Set your backend base URL here (http://localhost:3000 or http://192.168.x.x:3000 or https://xyz.ngrok.io)
+      const API_BASE = "http://localhost:3000";
+    </script>
 
-  <!-- Distributor/Pharmacy: Update Location -->
-  <section>
-    <h2>Update Location</h2>
-    <input type="text" id="updDrugId" placeholder="Drug ID" />
-    <select id="location">
-      <option value="Distributor">Distributor</option>
-      <option value="Pharmacy">Pharmacy</option>
-      <option value="Hospital">Hospital</option>
-    </select>
-    <button onclick="updateLocation()">Update</button>
-    <p id="updResult"></p>
-  </section>
+    <div class="grid">
 
-  <!-- Consumer: Verify Drug -->
-  <section>
-    <h2>Verify Drug (Consumer)</h2>
-    <input type="text" id="verDrugId" placeholder="Enter Drug ID" />
-    <button onclick="verifyDrug()">Verify</button>
-    <div id="verResult"></div>
-  </section>
+      <!-- REGISTER -->
+      <section class="card">
+        <h2>Register Drug (Manufacturer)</h2>
+        <div class="field">
+          <input id="regDrugId" type="text" placeholder="Drug ID (e.g. DRUG-123 or RFID UID)">
+        </div>
+        <div class="field">
+          <input id="regDrugName" type="text" placeholder="Drug Name (e.g. Paracetamol)">
+        </div>
+        <div class="field">
+          <input id="regComposition" type="text" placeholder="Composition (e.g. Paracetamol)">
+          <input id="regDosage" type="text" placeholder="Dosage (e.g. 20mg)" class="small">
+        </div>
+        <div class="field">
+          <input id="regBatch" type="text" placeholder="Batch No (e.g. B-001)">
+          <input id="regExpiry" type="date" placeholder="Expiry Date" class="small">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button onclick="registerDrug()">Register</button>
+          <button class="ghost" onclick="clearRegister()">Clear</button>
+        </div>
+        <div id="regResult" class="result muted"></div>
+        <div class="muted" style="margin-top:8px;">Tip: use manufacturer UI or script to sign/register in production.</div>
+      </section>
+
+      <!-- UPDATE LOCATION -->
+      <section class="card">
+        <h2>Update Location (Distributor / Pharmacy)</h2>
+        <div class="field">
+          <input id="updDrugId" type="text" placeholder="Drug ID (e.g. DRUG-123)">
+        </div>
+        <div class="field">
+          <select id="updLocation">
+            <option>Distributor</option>
+            <option>Pharmacy</option>
+            <option>Hospital</option>
+            <option>Consumer</option>
+            <option>Courier</option>
+          </select>
+          <input id="updTimestamp" type="datetime-local" class="small">
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button onclick="updateLocation()">Update Location</button>
+          <button class="ghost" onclick="clearUpdate()">Clear</button>
+        </div>
+        <div id="updResult" class="result muted"></div>
+        <div class="muted" style="margin-top:8px;">If timestamp left blank, current time will be used.</div>
+      </section>
+
+      <!-- VERIFY -->
+      <section class="card full-width">
+        <h2>Verify Drug (Consumer)</h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="verDrugId" type="text" placeholder="Enter Drug ID / Scan QR">
+          <button onclick="verifyDrug()" style="min-width:110px;">Verify</button>
+          <button class="secondary" onclick="loadSample()">Load Sample</button>
+          <div style="flex:1"></div>
+          <button class="ghost" onclick="clearVerify()">Clear</button>
+        </div>
+
+        <div id="verResult" style="margin-top:14px;"></div>
+      </section>
+
+    </div>
+
+    <footer style="margin-top:18px; color:var(--muted); font-size:13px;">
+      <div>Backend: <span id="apiBaseShown" class="mono"></span></div>
+      <div style="margin-top:6px;">Open-source demo • For production, add manufacturer signature verification & secure readers.</div>
+    </footer>
+  </div>
 
   <script>
-    const API_BASE = "http://localhost:3000"; // change if backend runs elsewhere
+    // show API base in footer
+    document.getElementById("apiBaseShown").innerText = (typeof API_BASE !== 'undefined') ? API_BASE : "http://localhost:3000";
 
+    // helpers
+    function showEl(id, txt, isError=false) {
+      const el = document.getElementById(id);
+      el.innerText = txt;
+      el.style.color = isError ? "#c0392b" : "#2c3e50";
+    }
+    function clearRegister(){ document.getElementById("regDrugId").value=""; document.getElementById("regDrugName").value=""; document.getElementById("regComposition").value=""; document.getElementById("regDosage").value=""; document.getElementById("regBatch").value=""; document.getElementById("regExpiry").value=""; showEl('regResult',''); }
+    function clearUpdate(){ document.getElementById("updDrugId").value=""; document.getElementById("updTimestamp").value=""; showEl('updResult',''); }
+    function clearVerify(){ document.getElementById("verDrugId").value=""; document.getElementById("verResult").innerHTML=""; }
+
+    // Register drug (calls /api/register)
     async function registerDrug() {
-      const drugId = document.getElementById("regDrugId").value;
-      const batchNo = document.getElementById("batchNo").value;
-      const expiryDate = document.getElementById("expiryDate").value;
+      const drugId = document.getElementById("regDrugId").value.trim();
+      const drugName = document.getElementById("regDrugName").value.trim();
+      const composition = document.getElementById("regComposition").value.trim();
+      const dosage = document.getElementById("regDosage").value.trim();
+      const batchNo = document.getElementById("regBatch").value.trim();
+      const expiryDate = document.getElementById("regExpiry").value;
+
+      if (!drugId || !drugName || !dosage) {
+        showEl('regResult', 'Please fill at least Drug ID, Name and Dosage.', true);
+        return;
+      }
 
       try {
+        const body = { drugId, drugName, composition, dosage, batchNo, expiryDate };
         const res = await fetch(`${API_BASE}/api/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ drugId, batchNo, expiryDate })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
-        document.getElementById("regResult").innerText = data.msg || data.error;
+        if (data.ok) {
+          showEl('regResult', `✅ ${data.msg}`);
+        } else {
+          showEl('regResult', `❌ ${data.error || 'Failed to register'}`, true);
+        }
       } catch (err) {
-        document.getElementById("regResult").innerText = "❌ Error connecting to backend";
+        console.error(err);
+        showEl('regResult', '❌ Error connecting to backend', true);
       }
     }
 
+    // Update location
     async function updateLocation() {
-      const drugId = document.getElementById("updDrugId").value;
-      const location = document.getElementById("location").value;
-      const timestamp = new Date().toISOString();
+      const drugId = document.getElementById("updDrugId").value.trim();
+      const location = document.getElementById("updLocation").value;
+      let timestamp = document.getElementById("updTimestamp").value;
+      if (!drugId) { showEl('updResult','Please enter Drug ID', true); return; }
+      if (!timestamp) timestamp = new Date().toISOString();
+      else {
+        // convert local datetime-local value to ISO
+        const dt = new Date(timestamp);
+        timestamp = dt.toISOString();
+      }
 
       try {
+        const body = { drugId, location, timestamp };
         const res = await fetch(`${API_BASE}/api/updateLocation`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ drugId, location, timestamp })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
-        document.getElementById("updResult").innerText = data.msg || data.error;
+        if (data.ok) showEl('updResult', `✅ ${data.msg}`);
+        else showEl('updResult', `❌ ${data.error || 'Failed to update'}`, true);
       } catch (err) {
-        document.getElementById("updResult").innerText = "❌ Error connecting to backend";
+        console.error(err);
+        showEl('updResult','❌ Error connecting to backend', true);
       }
     }
 
+    // Verify drug (show timeline + metadata)
     async function verifyDrug() {
-      const drugId = document.getElementById("verDrugId").value;
+      const drugId = document.getElementById("verDrugId").value.trim();
+      if (!drugId) { alert('Enter Drug ID'); return; }
+      const resultEl = document.getElementById("verResult");
+      resultEl.innerHTML = '<div class="muted">Loading...</div>';
+
       try {
-        const res = await fetch(`${API_BASE}/api/verify/${drugId}`);
+        const res = await fetch(`${API_BASE}/api/verify/${encodeURIComponent(drugId)}`);
         const data = await res.json();
 
         if (!data.ok) {
-          document.getElementById("verResult").innerHTML = "<p style='color:red;'>Drug not found!</p>";
+          resultEl.innerHTML = `<div style="color:#c0392b">❌ ${data.error || 'Drug not found'}</div>`;
           return;
         }
 
-        const today = new Date().toISOString().split("T")[0];
-        const expiryStatus = data.expiry < today ? 
-          `<span class="expired">❌ Expired</span>` : 
-          `<span class="valid">✅ Valid</span>`;
+        // expiry status
+        const today = new Date().toISOString().split('T')[0];
+        const expiry = data.expiry || '';
+        const expiryStatus = (expiry && expiry < today) ? `<span class="badge-expired">Expired</span>` : `<span class="badge-valid">Valid</span>`;
 
         let html = `
-          <div class="card">
-            <h3>Drug ID: ${data.drugId}</h3>
-            <p><b>Expiry:</b> ${data.expiry} ${expiryStatus}</p>
-            <h4>History:</h4>
-            <ul>
+          <div style="display:flex; gap:12px; align-items:center; justify-content:space-between;">
+            <div>
+              <h3 style="margin:0">${data.drugName || '—'} <span class="muted">(${data.dosage || '—'})</span></h3>
+              <div class="muted">Batch: ${data.batchNo || '—'} • Composition: ${data.composition || '—'}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:14px; color:#2c3e50"><b>Expiry</b></div>
+              <div style="font-size:14px">${expiry || '—'} ${expiry ? expiryStatus : ''}</div>
+            </div>
+          </div>
+          <hr style="margin:12px 0">
+          <h4 style="margin:6px 0">Supply Chain History</h4>
         `;
 
-        data.history.forEach(h => {
-          html += `
-            <li>
-              <b>Location:</b> ${h.location} <br/>
-              <b>Time:</b> ${h.timestamp} <br/>
-              <b>Actor:</b> ${h.actor}
-            </li>`;
-        });
+        // build timeline from data.history (already array of objects from backend)
+        const history = data.history || [];
+        if (history.length === 0) {
+          html += `<div class="muted">No movement recorded yet.</div>`;
+        } else {
+          html += `<div class="timeline">`;
+          history.forEach((h, idx) => {
+            html += `
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-card">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div><strong>Stage ${idx+1} — ${h.location}</strong></div>
+                    <div class="muted mono">${h.actor ? h.actor.slice(0,10)+'...' : ''}</div>
+                  </div>
+                  <div class="muted" style="margin-top:6px">${new Date(h.timestamp).toLocaleString()}</div>
+                </div>
+              </div>
+            `;
+          });
+          html += `</div>`;
+        }
 
-        html += "</ul></div>";
-        document.getElementById("verResult").innerHTML = html;
+        resultEl.innerHTML = html;
+
       } catch (err) {
-        document.getElementById("verResult").innerText = "❌ Error connecting to backend";
+        console.error(err);
+        resultEl.innerHTML = `<div style="color:#c0392b">❌ Error connecting to backend</div>`;
       }
     }
+
+    // quick sample loader for demo convenience
+    function loadSample(){
+      document.getElementById("verDrugId").value = "DRUG-123";
+    }
+
+    // optional: allow Enter key to trigger verify
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        const active = document.activeElement;
+        if (active && (active.id === 'verDrugId' || active.id === 'updDrugId' || active.id === 'regDrugId')) {
+          // small delay to let input value update
+          setTimeout(()=> {
+            if (active.id === 'verDrugId') verifyDrug();
+            if (active.id === 'updDrugId') updateLocation();
+            if (active.id === 'regDrugId') registerDrug();
+          }, 10);
+        }
+      }
+    });
   </script>
+
+  <!-- Notes: If opening this file via file:// causes CORS issues, run a simple static server:
+       python3 -m http.server 8000  (then open http://localhost:8000/frontend/index.html)
+       or: npx http-server . -p 8000
+  -->
 </body>
 </html>

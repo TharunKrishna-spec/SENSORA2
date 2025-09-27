@@ -2,54 +2,88 @@
 pragma solidity ^0.8.0;
 
 contract DrugRegistry {
-    struct Event {
-        string location;
-        string timestamp;
-        address actor;
-    }
-
     struct Drug {
+        string drugName;
+        string composition;
+        string dosage;
         string batchNo;
         string expiryDate;
         bool exists;
     }
 
-    mapping(string => Drug) public drugs;
-    mapping(string => Event[]) private history;
-
-    event Registered(string drugId, string batchNo, string expiry);
-    event Updated(string drugId, string location, string timestamp, address actor);
-
-    // Manufacturer registers a drug batch
-    function registerBatch(
-        string memory drugId,
-        string memory batchNo,
-        string memory expiry
-    ) public {
-        require(!drugs[drugId].exists, "Drug already registered");
-        drugs[drugId] = Drug(batchNo, expiry, true);
-        emit Registered(drugId, batchNo, expiry);
+    struct HistoryEntry {
+        string location;
+        string timestamp;
+        address actor;
     }
 
-    // Update location when scanned
+    mapping(string => Drug) private drugs;
+    mapping(string => HistoryEntry[]) private histories;
+
+    event DrugRegistered(string drugId, string drugName, string dosage, string expiryDate);
+    event LocationUpdated(string drugId, string location, string timestamp, address actor);
+
+    // ✅ Register drug
+    function registerBatch(
+        string memory drugId,
+        string memory drugName,
+        string memory composition,
+        string memory dosage,
+        string memory batchNo,
+        string memory expiryDate
+    ) public {
+        require(!drugs[drugId].exists, "Drug already registered");
+
+        drugs[drugId] = Drug(drugName, composition, dosage, batchNo, expiryDate, true);
+
+        emit DrugRegistered(drugId, drugName, dosage, expiryDate);
+    }
+
+    // ✅ Update location
     function updateLocation(
         string memory drugId,
         string memory location,
         string memory timestamp
     ) public {
         require(drugs[drugId].exists, "Drug not found");
-        history[drugId].push(Event(location, timestamp, msg.sender));
-        emit Updated(drugId, location, timestamp, msg.sender);
+
+        histories[drugId].push(HistoryEntry(location, timestamp, msg.sender));
+
+        emit LocationUpdated(drugId, location, timestamp, msg.sender);
     }
 
-    // View history
-    function getHistory(string memory drugId) public view returns (Event[] memory) {
-        return history[drugId];
-    }
-
-    // Check expiry (compare strings outside for simplicity)
-    function getExpiry(string memory drugId) public view returns (string memory) {
+    // ✅ Get details of drug
+    function getDetails(string memory drugId) public view returns (
+        string memory drugName,
+        string memory composition,
+        string memory dosage,
+        string memory batchNo,
+        string memory expiryDate
+    ) {
         require(drugs[drugId].exists, "Drug not found");
-        return drugs[drugId].expiryDate;
+        Drug memory d = drugs[drugId];
+        return (d.drugName, d.composition, d.dosage, d.batchNo, d.expiryDate);
+    }
+
+    // ❌ You can’t directly return array of structs in web3.js
+    // ✅ Instead, split into separate arrays
+    function getHistory(string memory drugId) public view returns (
+        string[] memory locations,
+        string[] memory timestamps,
+        address[] memory actors
+    ) {
+        uint len = histories[drugId].length;
+        locations = new string[](len);
+        timestamps = new string[](len);
+        actors = new address[](len);
+
+        for (uint i = 0; i < len; i++) {
+            HistoryEntry memory h = histories[drugId][i];
+            locations[i] = h.location;
+            timestamps[i] = h.timestamp;
+            actors[i] = h.actor;
+        }
+
+        return (locations, timestamps, actors);
     }
 }
