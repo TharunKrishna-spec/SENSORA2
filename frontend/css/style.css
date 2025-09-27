@@ -1,0 +1,112 @@
+/* 🌈 Global styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #e0f2fe, #fef9c3);
+  min-height: 100vh;
+}
+
+/* 🧭 Header / Navbar */
+header {
+  background: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  color: #2563eb;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+nav a {
+  color: #444;
+  text-decoration: none;
+  margin-left: 15px;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+nav a:hover {
+  color: #2563eb;
+}
+
+/* 📦 Container */
+.container {
+  max-width: 600px;
+  background: white;
+  margin: 30px auto;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* 📝 Form */
+.container input,
+.container button {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+.container input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 3px #2563eb50;
+}
+
+.container button {
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.container button:hover {
+  background: #1e4ed8;
+}
+
+/* 🧾 Output Box */
+pre {
+  background: #f4f4f4;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  overflow-x: auto;
+}
+
+/* 📊 Table (for consumer history) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+table th {
+  background: #2563eb;
+  color: white;
+}
+
+table tr:nth-child(even) {
+  background: #f9fafb;
+}

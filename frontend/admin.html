@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard – Drug Distribution</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: linear-gradient(135deg, #2b5876, #4e4376);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-top: 20px;
+      font-size: 28px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      max-width: 500px;
+      width: 100%;
+      margin-top: 30px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+    }
+    button {
+      background: #00bcd4;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 15px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #0194a7;
+    }
+    .log {
+      margin-top: 15px;
+      font-size: 14px;
+      background: rgba(0,0,0,0.3);
+      padding: 10px;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>👑 Admin Dashboard</h1>
+
+  <div class="card">
+    <label>Manufacturer Address</label>
+    <input id="manufAddress" placeholder="0x..." />
+
+    <button id="authorizeBtn">✅ Authorize Manufacturer</button>
+    <button id="revokeBtn">❌ Revoke Manufacturer</button>
+    <button id="checkNonceBtn">🔍 Check Nonce</button>
+
+    <div class="log" id="logBox">Logs will appear here...</div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:3000";
+
+    const manufInput = document.getElementById("manufAddress");
+    const logBox = document.getElementById("logBox");
+
+    function log(msg) {
+      logBox.textContent = msg;
+    }
+
+    async function post(url, data) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    }
+
+    document.getElementById("authorizeBtn").onclick = async () => {
+      const address = manufInput.value.trim();
+      if (!address) return log("⚠️ Enter address");
+      log("Authorizing...");
+      const res = await post(`${API_BASE}/api/authorizeManufacturer`, { address });
+      log(JSON.stringify(res, null, 2));
+    };
+
+    document.getElementById("revokeBtn").onclick = async () => {
+      const address = manufInput.value.trim();
+      if (!address) return log("⚠️ Enter address");
+      log("Revoking...");
+      const res = await post(`${API_BASE}/api/revokeManufacturer`, { address });
+      log(JSON.stringify(res, null, 2));
+    };
+
+    document.getElementById("checkNonceBtn").onclick = async () => {
+      const address = manufInput.value.trim();
+      if (!address) return log("⚠️ Enter address");
+      log("Fetching nonce...");
+      const res = await fetch(`${API_BASE}/api/nonce/${address}`).then(r=>r.json());
+      log(JSON.stringify(res, null, 2));
+    };
+  </script>
+</body>
+</html>

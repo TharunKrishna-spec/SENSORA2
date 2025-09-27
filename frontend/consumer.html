@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Consumer - Verify Drug</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>💊 SENSORA</h1>
+  <nav>
+    <a href="admin.html">Admin</a>
+    <a href="manufacturer.html">Manufacturer</a>
+    <a href="consumer.html">Consumer</a>
+  </nav>
+</header>
+
+<div class="container">
+  <h2>🧍 Consumer Verification</h2>
+
+  <input type="text" id="verifyId" placeholder="Enter Drug ID">
+  <button id="verifyBtn">Verify</button>
+
+  <pre id="verifyOutput"></pre>
+
+  <table id="historyTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Location</th>
+        <th>Timestamp</th>
+        <th>Actor</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script src="js/consumer.js"></script>
+</body>
+</html>
